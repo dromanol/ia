@@ -1,0 +1,8 @@
+{
+    "name": "common",
+    "description": "Cross-project skills that apply regardless of the repository you're working in. Always keep enabled.",
+    "version": "1.0.0",
+    "author": {
+        "name": "Daniel Romano"
+    }
+}

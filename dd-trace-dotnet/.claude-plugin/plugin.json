@@ -1,0 +1,8 @@
+{
+    "name": "dd-trace-dotnet",
+    "description": "Skills for working in the dd-trace-dotnet repository (the Datadog .NET tracer). Includes run-system-tests: build the Linux tracer package with Docker and run the system-tests suite against a local build.",
+    "version": "1.0.0",
+    "author": {
+        "name": "Daniel Romano"
+    }
+}

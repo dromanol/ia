@@ -1,0 +1,19 @@
+{
+    "name": "dromanol",
+    "metadata": {
+        "description": "Daniel Romano's personal Claude plugins"
+    },
+    "owner": {
+        "name": "Daniel Romano"
+    },
+    "plugins": [
+        {
+            "name": "common",
+            "source": "./common"
+        },
+        {
+            "name": "dd-trace-dotnet",
+            "source": "./dd-trace-dotnet"
+        }
+    ]
+}
