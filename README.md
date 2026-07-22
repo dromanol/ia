@@ -9,10 +9,15 @@ ia/
 ├── .claude-plugin/marketplace.json   # the marketplace catalog (lists the plugins below)
 ├── common/                            # plugin: cross-project skills (keep enabled everywhere)
 │   ├── .claude-plugin/plugin.json
+│   ├── hooks/hooks.json               # auto-load the global knowledge index every session
 │   └── skills/
+│       ├── codex-review/              # independent second-opinion code review via codex CLI
+│       └── knowledge-base/            # GLOBAL cross-project knowledge base (recall/save/list)
 └── dd-trace-dotnet/                   # plugin: skills for the dd-trace-dotnet repo
     ├── .claude-plugin/plugin.json
+    ├── hooks/hooks.json               # auto-load the dd-trace-dotnet knowledge index (only in that repo)
     └── skills/
+        ├── knowledge-base/            # dd-trace-dotnet-scoped knowledge base
         └── run-system-tests/          # build the Linux tracer package + run system-tests
 ```
 
