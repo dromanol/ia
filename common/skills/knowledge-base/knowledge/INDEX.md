@@ -6,4 +6,5 @@ session, everywhere) and grows via `/knowledge-base save`. Keep it curated and c
 entries. Repo-specific knowledge belongs in that repo's plugin, not here.
 
 ## Entries
+- [Keep generated text concise](entries/concise-generated-text.md) — PRs, commits, comments, replies: short, lead with the conclusion, trim words not facts
 - [GitHub token via ddtool](entries/github-token-ddtool.md) — `ddtool auth github token` (defaults to DataDog org)
