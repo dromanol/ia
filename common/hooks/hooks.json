@@ -1,5 +1,5 @@
 {
-  "description": "Global knowledge base: auto-load the cross-project knowledge index at session start (every session, any repo), auto-link per-project skills from a sibling ../ia/<project>/skills directory, and remind to capture reusable knowledge before context compaction.",
+  "description": "Global knowledge base: auto-load the cross-project knowledge index at session start (every session, any repo), copy per-project skills from the canonical ia repo into the current clone's .claude/skills, and remind to capture reusable knowledge before context compaction.",
   "hooks": {
     "SessionStart": [
       {

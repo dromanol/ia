@@ -20,8 +20,9 @@ This skill closes the loop needed to validate that a tracer change doesn't break
 
 ### Repo layout (important)
 
-This skill ships as a **plugin** (its files live in the plugin cache; reference them via
-`${CLAUDE_SKILL_DIR}`). It drives two repos that must be **siblings** under a common parent:
+This skill is maintained in the `ia` repo and copied into the clone's `.claude/skills/` by the
+`common` bootstrapper; always reference its bundled scripts via `${CLAUDE_SKILL_DIR}` so they resolve
+wherever the skill lives. It drives two repos that must be **siblings** under a common parent:
 
 ```
 <root>/dd-trace-dotnet/   <- the tracer repo (built)

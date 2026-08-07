@@ -15,18 +15,20 @@
     Both stages bind-mount the repo, so the monitoring-home persists between them. Only the `Clean`
     target wipes the monitoring-home, so we never pass Clean to the Debian stage.
 
-    LAYOUT: this skill lives in the `ia` repo. The `dd-trace-dotnet` and `system-tests` repos are
-    expected as SIBLINGS under the same parent (git root), e.g.
-        <root>\ia\.claude\skills\run-system-tests\   <- this script
-        <root>\dd-trace-dotnet\
+    LAYOUT: this skill is maintained in the `ia` repo and copied into each clone's
+    `.claude\skills\run-system-tests\` by the `common` bootstrapper at session start. Nothing here is
+    resolved relative to the script's own location; the `dd-trace-dotnet` and `system-tests` repos are
+    expected as SIBLINGS under a common parent, e.g.
+        <root>\dd-trace-dotnet\   <- run Claude from here (cwd)
         <root>\system-tests\
-    The tracer repo is resolved automatically as <root>\dd-trace-dotnet (override with -DdTraceRoot).
+    The tracer repo is resolved from the current directory (see below); override with -DdTraceRoot.
 
 .PARAMETER Arch
     Target architecture: x64 (default) or arm64. Determines the output folder linux-<arch>.
 
 .PARAMETER DdTraceRoot
-    Path to the dd-trace-dotnet repo. Defaults to the sibling of the `ia` repo (<git root>\dd-trace-dotnet).
+    Path to the dd-trace-dotnet repo. Defaults to resolving it from the current directory (walk up to
+    the repo root, else a child/sibling of cwd); override with -DdTraceRoot / $env:DD_TRACE_ROOT.
 
 .PARAMETER SkipMusl
     Skip the Alpine/musl stage and only rebuild + repackage in Debian, reusing the musl binaries from

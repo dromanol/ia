@@ -11,9 +11,10 @@
 # Both stages bind-mount the repo, so the monitoring-home persists between them. Only the `Clean`
 # target wipes the monitoring-home, so we never pass Clean to the Debian stage.
 #
-# LAYOUT: this skill lives in the `ia` repo. dd-trace-dotnet and system-tests are expected as SIBLINGS
-# under the same parent (git root). The tracer repo is resolved as <git root>/dd-trace-dotnet; override
-# with the DD_TRACE_ROOT env var.
+# LAYOUT: this skill is maintained in the `ia` repo and copied into each clone's
+# .claude/skills/run-system-tests/ by the `common` bootstrapper. Nothing is resolved relative to the
+# script's own location; dd-trace-dotnet and system-tests are expected as SIBLINGS under a common
+# parent, and the tracer repo is resolved from the current directory (override with DD_TRACE_ROOT).
 #
 # Usage:
 #   ./build-linux-package.sh [--arch x64|arm64] [--skip-musl] [--repackage] [--clean]

@@ -1,0 +1,9 @@
+{
+  "_comment": "Sibling repos that this project's skills expect next to the clone (same parent dir). The `common` bootstrapper warns at session start if any are missing from the active clone's parent. Each entry is a name string or {name, reason}.",
+  "required_siblings": [
+    {
+      "name": "system-tests",
+      "reason": "run-system-tests stages the built tracer package into ../system-tests/binaries and runs the suite from there (SKILL.md steps 2-4)"
+    }
+  ]
+}
