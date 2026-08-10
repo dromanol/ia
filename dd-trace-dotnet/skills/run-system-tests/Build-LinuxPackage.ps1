@@ -68,8 +68,8 @@ $ErrorActionPreference = 'Stop'
 
 $DOTNETSDK_VERSION = '10.0.100'
 
-# Resolve the dd-trace-dotnet repo from the CURRENT directory, not the script location: when this skill
-# is installed as a plugin its files live in a managed cache, so $PSScriptRoot is unrelated to the repos.
+# Resolve the dd-trace-dotnet repo from the CURRENT directory, not the script location: this file is a
+# managed copy under <clone>\.claude\skills\, so $PSScriptRoot says nothing about which repos to build.
 # Claude normally runs inside the tracer repo (or its git root). Override with -DdTraceRoot / $env:DD_TRACE_ROOT.
 function Test-DdTraceRoot([string]$p) { $p -and (Test-Path (Join-Path $p 'tracer/build/_build')) }
 if (-not $DdTraceRoot) { $DdTraceRoot = $env:DD_TRACE_ROOT }

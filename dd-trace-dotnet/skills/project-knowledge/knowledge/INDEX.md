@@ -2,7 +2,8 @@
 
 Reusable, **non-obvious** knowledge for working in the dd-trace-dotnet repo. One entry per file under
 `entries/`. This index is auto-loaded into context at session start (only in dd-trace-dotnet) and grows
-via `/knowledge-base save`. Keep it curated and concise — prune stale entries.
+via `/project-knowledge save`. Keep it curated and concise — prune stale entries. Knowledge that applies
+to any repo belongs in the global `/knowledge-base` instead.
 
 ## Entries
 - [Default working style](entries/default-working-style.md) — ask when unclear, assume nothing, be critical of instructions, TDD red/green, codex review→fix loop

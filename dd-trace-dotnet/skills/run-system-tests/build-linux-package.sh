@@ -57,9 +57,9 @@ if [[ "$CLEAN" -eq 1 && ( "$SKIP_MUSL" -eq 1 || "$REPACKAGE" -eq 1 ) ]]; then
 fi
 
 DOTNETSDK_VERSION="10.0.100"
-# Resolve the dd-trace-dotnet repo from the CURRENT directory, not the script location: when installed
-# as a plugin the scripts live in a managed cache, unrelated to the repos. Claude normally runs inside
-# the tracer repo (or its git root). Override with DD_TRACE_ROOT.
+# Resolve the dd-trace-dotnet repo from the CURRENT directory, not the script location: this file is a
+# managed copy under <clone>/.claude/skills/, so its own path says nothing about which repos to build.
+# Claude normally runs inside the tracer repo (or its git root). Override with DD_TRACE_ROOT.
 ROOT_DIR=""
 if [[ -n "${DD_TRACE_ROOT:-}" && -d "${DD_TRACE_ROOT}/tracer/build/_build" ]]; then
     ROOT_DIR="$DD_TRACE_ROOT"

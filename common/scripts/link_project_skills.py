@@ -9,6 +9,10 @@ marketplace, and there is exactly ONE place to edit them.
 
     <ia>/<project>/skills/<name>/   ->   <clone>/.claude/skills/<name>/   (plain copy, source wins)
 
+This is the ONLY delivery path for per-project skills: `<ia>/<project>/` is a plain skill source, not a
+plugin, and is deliberately absent from `.claude-plugin/marketplace.json`. Registering it as a plugin
+too would double-inject the project knowledge index and collide skill names.
+
 Design notes (by intent, not bugs):
   * Source of truth is the canonical `ia` repo (resolved from the `dromanol` marketplace registration),
     NOT a per-clone sibling. Every clone gets the same skills copied in.
@@ -32,6 +36,10 @@ import shutil
 import sys
 
 MARKER = ".ia-managed"
+# Per-project knowledge bases are named `project-knowledge`, NOT `knowledge-base`: the latter is the
+# global (cross-project) skill this plugin ships, and two same-named skills make `/knowledge-base`
+# ambiguous once the project copy lands in <clone>/.claude/skills/.
+PROJECT_KB = "project-knowledge"
 
 
 def read_event():
@@ -118,8 +126,40 @@ def remove_dest(path):
             pass
 
 
+def git_common_dir(repo_root):
+    """Resolve the git dir that owns `info/exclude`.
+
+    `<root>/.git` is a directory in a normal clone, but a *file* (`gitdir: <path>`) in a linked
+    worktree. Git also redirects `info/` to the common dir, so a worktree's own gitdir is not where
+    the exclude file lives -- follow its `commondir` pointer.
+    """
+    dot_git = os.path.join(repo_root, ".git")
+    if os.path.isdir(dot_git):
+        return dot_git
+    try:
+        with open(dot_git, encoding="utf-8") as fh:
+            for raw in fh:
+                if raw.startswith("gitdir:"):
+                    gitdir = raw.split(":", 1)[1].strip()
+                    if not os.path.isabs(gitdir):
+                        gitdir = os.path.join(repo_root, gitdir)
+                    common = os.path.join(gitdir, "commondir")
+                    if os.path.isfile(common):
+                        with open(common, encoding="utf-8") as cfh:
+                            rel = cfh.read().strip()
+                        if rel:
+                            gitdir = rel if os.path.isabs(rel) else os.path.join(gitdir, rel)
+                    return os.path.normpath(gitdir)
+    except Exception:
+        pass
+    return None
+
+
 def add_git_exclude(repo_root, name):
-    exclude = os.path.join(repo_root, ".git", "info", "exclude")
+    gitdir = git_common_dir(repo_root)
+    if not gitdir:
+        return
+    exclude = os.path.join(gitdir, "info", "exclude")
     line = "/.claude/skills/{}/".format(name)
     try:
         os.makedirs(os.path.dirname(exclude), exist_ok=True)
@@ -137,8 +177,24 @@ def add_git_exclude(repo_root, name):
         pass
 
 
+def remove_git_exclude(repo_root, name):
+    """Drop a pruned skill's line from the clone's exclude file, so renames don't leave stale rules."""
+    gitdir = git_common_dir(repo_root)
+    if not gitdir:
+        return
+    exclude = os.path.join(gitdir, "info", "exclude")
+    line = "/.claude/skills/{}/".format(name)
+    try:
+        with open(exclude, encoding="utf-8") as fh:
+            kept = [l for l in fh.readlines() if l.strip() != line]
+        with open(exclude, "w", encoding="utf-8") as fh:
+            fh.writelines(kept)
+    except Exception:
+        pass
+
+
 def read_knowledge_index(src_skills):
-    index_path = os.path.join(src_skills, "knowledge-base", "knowledge", "INDEX.md")
+    index_path = os.path.join(src_skills, PROJECT_KB, "knowledge", "INDEX.md")
     try:
         with open(index_path, encoding="utf-8") as fh:
             return fh.read().strip()
@@ -222,6 +278,7 @@ def main():
                 continue
             if os.path.isfile(os.path.join(dest, MARKER)):
                 remove_dest(dest)
+                remove_git_exclude(repo_root, name)
                 pruned.append(name)
     except Exception:
         pass
@@ -257,8 +314,9 @@ def main():
     if index:
         parts.append(
             "\n---\n# {} knowledge base (auto-loaded)\n"
-            "Use `/knowledge-base recall <topic>` to pull a full entry, "
-            "`/knowledge-base save` to add learnings.\n\n{}".format(project, index)
+            "Project-scoped knowledge. Use `/{kb} recall <topic>` to pull a full entry, `/{kb} save` to "
+            "add learnings. (Cross-project knowledge lives in `/knowledge-base` instead.)\n\n{}".format(
+                project, index, kb=PROJECT_KB)
         )
 
     print(json.dumps({
