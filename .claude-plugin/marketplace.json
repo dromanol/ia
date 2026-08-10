@@ -10,10 +10,6 @@
         {
             "name": "common",
             "source": "./common"
-        },
-        {
-            "name": "dd-trace-dotnet",
-            "source": "./dd-trace-dotnet"
         }
     ]
 }

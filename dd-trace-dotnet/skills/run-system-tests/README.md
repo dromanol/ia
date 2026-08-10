@@ -4,8 +4,10 @@ Build the Linux **.NET tracer** package locally with Docker, deploy it into the
 [`system-tests`](https://github.com/DataDog/system-tests) repo, and run a scenario against it — to
 verify that tracer changes don't break anything end-to-end.
 
-> This skill lives in the **`ia`** repo (personal tooling). `SKILL.md` is the model-facing procedure
-> (invoked as `/run-system-tests` when this repo is the active Claude project); this README is the
+> This skill is maintained in the **`ia`** repo at `dd-trace-dotnet/skills/run-system-tests/`, and the
+> `common` plugin's SessionStart bootstrapper copies it into `dd-trace-dotnet/.claude/skills/` so it is
+> invocable as `/run-system-tests` from inside the tracer repo. Edit it here in `ia`, never in the copy
+> (the copy is overwritten every session). `SKILL.md` is the model-facing procedure; this README is the
 > human-facing guide.
 
 ## Repo layout (required)
@@ -13,9 +15,9 @@ verify that tracer changes don't break anything end-to-end.
 The skill drives two **sibling** repos under the same parent (git root):
 
 ```
-<root>/ia/.claude/skills/run-system-tests/   <- this skill
-<root>/dd-trace-dotnet/                        <- the tracer repo (built)
-<root>/system-tests/                           <- the test suite
+<root>/ia/dd-trace-dotnet/skills/run-system-tests/   <- this skill (source of truth)
+<root>/dd-trace-dotnet/                              <- the tracer repo (built)
+<root>/system-tests/                                 <- the test suite
 ```
 
 The build script resolves `dd-trace-dotnet` as `<root>/dd-trace-dotnet` automatically. Override with
@@ -73,12 +75,17 @@ All commands assume the current directory is `<root>` (parent of `ia`, `dd-trace
 
 ```powershell
 # PowerShell 7:
-pwsh -File ia/.claude/skills/run-system-tests/Build-LinuxPackage.ps1        # add -SkipMusl / -Repackage
+pwsh -File ia/dd-trace-dotnet/skills/run-system-tests/Build-LinuxPackage.ps1   # add -SkipMusl / -Repackage
 # or Windows PowerShell:
-powershell -File ia/.claude/skills/run-system-tests/Build-LinuxPackage.ps1
+powershell -File ia/dd-trace-dotnet/skills/run-system-tests/Build-LinuxPackage.ps1
 ```
-Linux/WSL host: `bash ia/.claude/skills/run-system-tests/build-linux-package.sh` (flags `--skip-musl` /
-`--repackage`). The script prints the produced `.tar.gz` path as its last stdout line.
+Linux/WSL host: `bash ia/dd-trace-dotnet/skills/run-system-tests/build-linux-package.sh` (flags
+`--skip-musl` / `--repackage`). The script prints the produced `.tar.gz` path as its last stdout line.
+
+Equivalently, from inside `dd-trace-dotnet` the copied skill works too:
+`pwsh -File .claude/skills/run-system-tests/Build-LinuxPackage.ps1` — which is what Claude invokes via
+`${CLAUDE_SKILL_DIR}`. Either path runs the same script; the tracer repo is resolved from the current
+directory, not from the script's location.
 
 ### Stage + build weblog + run (WSL)
 

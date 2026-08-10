@@ -10,156 +10,115 @@ argument-hint: "[scenario] [--repackage] [--skip-musl] [--weblog poc|uds] [--tes
 
 # Run system-tests against a local .NET tracer build
 
-## Overview
+Build the Linux **glibc** package → stage it into `system-tests/binaries/` → build the .NET weblog image
+and run a scenario. This skill only orchestrates existing Docker/Nuke/system-tests tooling.
 
-This skill closes the loop needed to validate that a tracer change doesn't break anything:
+## Layout
 
-1. **Build** the Linux **glibc** package (`datadog-dotnet-apm-<version>.tar.gz`) with Docker.
-2. **Stage** it into the `system-tests` repo's `binaries/` folder.
-3. **Build** the .NET weblog image and **run** a system-tests scenario against it.
-
-### Repo layout (important)
-
-This skill is maintained in the `ia` repo and copied into the clone's `.claude/skills/` by the
-`common` bootstrapper; always reference its bundled scripts via `${CLAUDE_SKILL_DIR}` so they resolve
-wherever the skill lives. It drives two repos that must be **siblings** under a common parent:
+Two repos must be **siblings**; run Claude from `dd-trace-dotnet` (the usual case):
 
 ```
 <root>/dd-trace-dotnet/   <- the tracer repo (built)
 <root>/system-tests/      <- the test suite
 ```
 
-Run Claude from inside `dd-trace-dotnet` (the usual case). The build script resolves the tracer repo
-from the current directory (also accepts the git root or a sibling); override with `-DdTraceRoot` /
-`$env:DD_TRACE_ROOT`. `system-tests` is expected at `<dd-trace-dotnet>\..\system-tests`.
+The build script resolves the tracer repo from the current directory (also accepts the git root or a
+sibling); override with `-DdTraceRoot` / `$env:DD_TRACE_ROOT`. `system-tests` is expected at
+`<dd-trace-dotnet>\..\system-tests`. This skill is maintained in the `ia` repo and copied into the clone
+by the `common` bootstrapper — always invoke its bundled scripts via `${CLAUDE_SKILL_DIR}`.
 
-### Key facts (why it works this way)
+## Why it works this way
 
-- system-tests' .NET weblog containers are **Debian/glibc** (`mcr.microsoft.com/dotnet/aspnet:8.0`).
+- The .NET weblog containers are **Debian/glibc** (`mcr.microsoft.com/dotnet/aspnet:8.0`).
   `install_ddtrace.sh` only accepts `datadog-dotnet-apm-<version>.tar.gz` (or `.arm64.tar.gz`) — the
-  **musl** artifact is not used, and it asserts **exactly one** `datadog-dotnet-apm*.tar.gz` in
-  `binaries/`.
-- The glibc `.tar.gz` also bundles the musl-x64 binaries, so producing it requires **two Docker
-  stages** (Alpine for musl + Debian for glibc/packaging). `Build-LinuxPackage.ps1` handles this.
-- **system-tests does not run on native Windows** (bash + Docker + Python 3.12). On Windows, run its
-  build/run steps inside **WSL2** (Docker Desktop shares the daemon). The tracer build itself runs
-  fine from Windows via Docker.
+  **musl** artifact is unused — and asserts **exactly one** `datadog-dotnet-apm*.tar.gz` in `binaries/`.
+- That glibc tar still bundles the musl-x64 binaries, so building it needs **two Docker stages** (Alpine
+  for musl + Debian for glibc/packaging). `Build-LinuxPackage.ps1` handles this.
+- **system-tests does not run on native Windows** (needs bash + Docker + Python 3.12) — run its steps in
+  **WSL2** (Docker Desktop shares the daemon). The tracer build itself runs fine from Windows via Docker.
 
 ## Prerequisites
 
-Verify these before starting; if one fails, tell the user what's missing and stop.
+If one fails, tell the user what's missing and stop.
 
-- **Docker** running: `docker info` succeeds.
-- **`dd-trace-dotnet` and `system-tests`** present as siblings (see layout). The build script finds
-  dd-trace-dotnet from the current dir / git root / sibling; override with `-DdTraceRoot` /
-  `$env:DD_TRACE_ROOT`. system-tests is expected at `<dd-trace-dotnet>\..\system-tests`.
-- **WSL2** (Windows hosts only): `wsl -l -q` lists a distro, and inside it Docker + **Python 3.12** are
-  available (`wsl bash -lc "python3.12 --version && docker info"`). Docker requires **WSL integration**
-  enabled for the distro (Docker Desktop → Settings → Resources → WSL Integration). The runner venv also
-  needs these apt packages (some runner deps build native wheels, e.g. `zstandard`/`Brotli`):
-  `sudo apt-get install -y python3.12-venv python3.12-dev build-essential`. Without `python3.12-venv`
-  the venv creation fails with `ensurepip is not available`; without `build-essential`/`python3.12-dev`
-  the wheel build fails with `x86_64-linux-gnu-gcc ... No such file or directory`. If a previous run
-  left a broken `venv/` (created before those packages), delete it: `rm -rf venv`. If
-  WSL/Python 3.12/Docker-in-WSL is not set up, print the exact commands (Steps 3-4) for the user to run
-  manually in a Linux/WSL shell and stop.
+- `docker info` succeeds.
+- Both repos present as siblings (see Layout).
+- **Windows hosts:** `wsl -l -q` lists a distro and
+  `wsl bash -lc "python3.12 --version && docker info"` succeeds (needs Docker Desktop → Settings →
+  Resources → **WSL Integration** enabled for the distro). The runner venv also needs:
+  ```bash
+  sudo apt-get install -y python3.12-venv python3.12-dev build-essential
+  ```
+  Without `python3.12-venv` venv creation fails with `ensurepip is not available`; without
+  `build-essential`/`python3.12-dev` native wheels (`zstandard`, `Brotli`) fail with
+  `x86_64-linux-gnu-gcc ... No such file or directory`. A `venv/` left over from before those packages is
+  broken — `rm -rf venv`. If WSL/Python 3.12/Docker-in-WSL isn't set up, print the Step 3-4 commands for
+  the user to run manually and stop.
 
 ## Arguments
 
-Arguments are available as: `$ARGUMENTS`. Parse them as:
+`$ARGUMENTS`: first non-flag token = **scenario** (default `DEFAULT`); `--repackage` → `-Repackage`;
+`--skip-musl` → `-SkipMusl`; `--weblog poc|uds` (default `poc`); `--tests <path>` to narrow the run.
 
-- First non-flag token = **scenario** (default `DEFAULT`).
-- `--repackage` → pass `-Repackage` to the build script (only re-tar, no compile).
-- `--skip-musl` → pass `-SkipMusl` (rebuild glibc + repackage, reuse existing musl binaries — the fast
-  path after a **code** change).
-- `--weblog poc|uds` → weblog variant (default `poc`).
-- `--tests <path>` → narrow the run to a specific test target for speed.
+Build mode: **full** (no flag) first time or after libdatadog/native-profiler changes; `--skip-musl` when
+iterating on tracer **code** (one native build instead of two); `--repackage` to only regenerate the tar.
 
-Choosing the build mode:
-- First time / after libdatadog / native profiler changes → **full** (no flag).
-- Iterating on tracer **code** → `--skip-musl` (one native build instead of two).
-- Nothing changed, just need the tar regenerated → `--repackage`.
-
-## Procedure
-
-Commands assume Claude runs from the `dd-trace-dotnet` repo (cwd). The build script is bundled with this
-skill — invoke it via `${CLAUDE_SKILL_DIR}` so it resolves regardless of where the plugin is installed.
-
-### Step 1 — Build the glibc tracer package
+## Step 1 — Build the glibc package
 
 ```powershell
 pwsh -File "$env:CLAUDE_SKILL_DIR/Build-LinuxPackage.ps1"   # add -SkipMusl or -Repackage
 ```
 
-If `pwsh` (PowerShell 7) is not installed, use Windows PowerShell (`powershell`) with the same
-arguments. You may first need to allow local script execution for the session
-(`Set-ExecutionPolicy -Scope Process RemoteSigned`).
-
-On a Linux/WSL host use the bash sibling instead:
+No `pwsh`? Use `powershell` with the same arguments; you may first need
+`Set-ExecutionPolicy -Scope Process RemoteSigned`. On a Linux/WSL host:
 
 ```bash
-bash "$CLAUDE_SKILL_DIR/build-linux-package.sh"          # add --skip-musl or --repackage
+bash "$CLAUDE_SKILL_DIR/build-linux-package.sh"             # add --skip-musl or --repackage
 ```
 
-The script prints the produced package path (last line of stdout), e.g.
-`...\dd-trace-dotnet\tracer\bin\artifacts\linux-x64\datadog-dotnet-apm-<version>.tar.gz`. Capture it. If
-the build fails complaining about missing musl files, re-run **without** `--skip-musl`.
+Capture the package path from the **last line of stdout**, e.g.
+`...\tracer\bin\artifacts\linux-x64\datadog-dotnet-apm-<version>.tar.gz`. Heavy the first time (two
+native compilations); `--skip-musl` roughly halves it. Failing on missing musl files → re-run without it.
 
-> This is a heavy build the first time (two native compilations). `--skip-musl` roughly halves it.
+## Step 2 — Stage it into system-tests
 
-### Step 2 — Stage the package into system-tests
-
-The installer requires **exactly one** `datadog-dotnet-apm*.tar.gz` in `binaries/`. Remove any old one,
-then copy the freshly built tar (from `dd-trace-dotnet`, a sibling of `system-tests`):
+`binaries/` must hold **exactly one** `datadog-dotnet-apm*.tar.gz`:
 
 ```powershell
-$dst = "..\system-tests\binaries"   # system-tests is a sibling of dd-trace-dotnet (cwd)
+$dst = "..\system-tests\binaries"   # sibling of dd-trace-dotnet (cwd)
 Remove-Item "$dst\datadog-dotnet-apm*.tar.gz" -ErrorAction SilentlyContinue
 Copy-Item <TAR_PATH_FROM_STEP_1> $dst
 ```
 
-### Step 3 — Build the .NET weblog image
-
-Resolve the system-tests path in WSL form and build. On Windows, shell into WSL. Also create a
-throwaway Docker config: WSL's `~/.docker/config.json` usually has `"credsStore": "desktop.exe"`, and
-the Python docker SDK used by `run.sh` can't exec that Windows binary (fails with `Exec format error`
-when pulling images). Pointing `DOCKER_CONFIG` at an empty config makes pulls anonymous (all images
-here are public) without touching the user's real config:
+## Step 3 — Build the .NET weblog image
 
 ```powershell
-$stWin = (Resolve-Path "..\system-tests").Path   # system-tests is a sibling of dd-trace-dotnet (cwd)
+$stWin = (Resolve-Path "..\system-tests").Path
 $st = wsl wslpath -a "$stWin"
 wsl bash -lc "mkdir -p /tmp/ddconfig && printf '{}' > /tmp/ddconfig/config.json && cd '$st' && DOCKER_CONFIG=/tmp/ddconfig ./build.sh dotnet"   # add -w uds for the uds weblog
 ```
 
-On a Linux/WSL host, just `cd` into system-tests and run `./build.sh dotnet` directly (the
-`DOCKER_CONFIG` workaround is only needed when the credential helper is `desktop.exe`).
+The throwaway `DOCKER_CONFIG` is required: WSL's `~/.docker/config.json` usually sets
+`"credsStore": "desktop.exe"`, which the Python docker SDK in `run.sh` can't exec (`Exec format error` on
+image pulls). An empty config makes pulls anonymous — all images here are public. **Never overwrite the
+user's real config.** On a Linux/WSL host just `cd` into system-tests and run `./build.sh dotnet`.
 
-`./build.sh dotnet` installs the tar from `binaries/` into the weblog image (look for the log line
-`Install ddtrace from datadog-dotnet-apm-<version>.tar.gz`) and also builds the Python runner venv.
+`build.sh dotnet` installs the tar into the weblog image (log line
+`Install ddtrace from datadog-dotnet-apm-<version>.tar.gz`) and builds the Python runner venv.
 
-### Step 4 — Run the scenario
+## Step 4 — Run the scenario
 
 ```powershell
-wsl bash -lc "cd '$st' && DOCKER_CONFIG=/tmp/ddconfig TEST_LIBRARY=dotnet ./run.sh <SCENARIO>"    # append <test path> if given
+wsl bash -lc "cd '$st' && DOCKER_CONFIG=/tmp/ddconfig TEST_LIBRARY=dotnet ./run.sh <SCENARIO>"   # append a test path if given
 ```
 
-- Default `<SCENARIO>` = `DEFAULT` (broad smoke: spawns weblog + Postgres + agent, runs most tests).
-- To narrow: `TEST_LIBRARY=dotnet ./run.sh DEFAULT tests/<file>.py::<Class>`.
+`DEFAULT` is the broad smoke run (weblog + Postgres + agent, most tests). There is **no `SMOKE`
+scenario** — narrow instead: `./run.sh DEFAULT tests/<file>.py::<Class>`.
 
-### Step 5 — Report results
+## Step 5 — Report
 
-Summarize pytest pass/fail. Logs are written under system-tests `logs/` (for `DEFAULT`) or
-`logs_<scenario>/`. On failure, point to the relevant log and the failing test names.
+Summarize pytest pass/fail. Logs land in system-tests `logs/` (`DEFAULT`) or `logs_<scenario>/`; on
+failure point to the relevant log and the failing test names.
 
-## Notes
-
-- Weblog variants for dotnet: `poc` (default), `uds`. There is no `SMOKE` scenario; use `DEFAULT`
-  (optionally narrowed with `--tests`) for a quick check.
-- If `docker login ghcr.io` errors appear during `build.sh`, the user needs to authenticate to GHCR
-  (see system-tests `docs/execute/build.md`). The .NET base images (mcr.microsoft.com) need no auth.
-- **`Exec format error: docker-credential-desktop.exe`** during `run.sh` → the WSL `~/.docker/config.json`
-  uses the Windows credential helper; use the `DOCKER_CONFIG=/tmp/ddconfig` workaround from Step 3
-  (do **not** overwrite the user's `~/.docker/config.json`).
-- This skill only orchestrates existing Docker/Nuke/system-tests tooling; it does not modify the build
-  or the tracer source.
+`docker login ghcr.io` errors during `build.sh` → the user must authenticate to GHCR (system-tests
+`docs/execute/build.md`). The .NET base images (mcr.microsoft.com) need no auth.
