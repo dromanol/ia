@@ -20,7 +20,7 @@ LLM-generated filler, which costs the change credibility.
 - Don't restate the diff, don't recap the conversation, don't enumerate everything tried.
 - Keep what a reviewer can't reconstruct: the reason, the non-obvious constraint, the known risk or
   gap in verification.
-- Comments explain *why*, not *what* — the code already says what.
+- Code comments: default to none — see [[minimal-code-comments]].
 - Match the surrounding density: if the repo's PRs and comments are terse, be terse.
 - Reporting finished work: state the outcome, not the journey. No per-file narration, no restating the
   request, no listing what was verified unless a check failed or a gap remains.
