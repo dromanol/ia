@@ -14,3 +14,5 @@ to any repo belongs in the global `/knowledge-base` instead.
 - [BuildAspNetIntegrationTests doesn't rebuild native/managed core](entries/build-target-doesnt-rebuild-native.md) — must run BuildTracerHome first or edits silently don't apply
 - [IIS-hosted profiler: native file logging is silent](entries/iis-native-file-logging-silent.md) — spdlog file sink writes nothing under IIS-Express; use a raw std::wofstream bypass logger
 - [Windows shell gotchas](entries/windows-shell-gotchas.md) — `|` in --Filter gets split by the shell; PathTooLongException on broad recursive searches
+- [Benchmark bot's chronic net472 regressions](entries/benchmark-bot-chronic-net472-regressions.md) — DbCommand/HttpClient net472 throughput flagged 🟥 on nearly every PR; not your change
+- [Security unit tests need the native WAF copied in](entries/appsec-unit-tests-need-native-waf-copy.md) — NRE at `Waf.Create` → run `CopyNativeFilesForAppSecUnitTests --build-configuration Debug`
