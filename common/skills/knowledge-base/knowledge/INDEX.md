@@ -6,5 +6,7 @@ session, everywhere) and grows via `/knowledge-base save`. Keep it curated and c
 entries. Repo-specific knowledge belongs in that repo's own `/project-knowledge` store, not here.
 
 ## Entries
+- [Never be complacent](entries/never-complacent.md) — no flattery or blind compliance: be critical with reasons, ask what's in doubt, verify instead of assuming
 - [Keep all output concise](entries/concise-generated-text.md) — PRs, commits, comments, **and session replies/reports**: lead with the conclusion, trim words not facts
+- [Minimal code comments](entries/minimal-code-comments.md) — default to zero comments; only a *why* the code can't show, one line
 - [GitHub token via ddtool](entries/github-token-ddtool.md) — `ddtool auth github token` (defaults to DataDog org)

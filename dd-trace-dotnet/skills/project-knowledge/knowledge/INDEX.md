@@ -6,7 +6,7 @@ via `/project-knowledge save`. Keep it curated and concise — prune stale entri
 to any repo belongs in the global `/knowledge-base` instead.
 
 ## Entries
-- [Default working style](entries/default-working-style.md) — ask when unclear, assume nothing, be critical of instructions, TDD red/green, codex review→fix loop
+- [Default working style](entries/default-working-style.md) — TDD red/green + codex review→fix loop (on top of the global never-complacent stance)
 - [BuildNativeWrapper produces the LD_PRELOAD ApiWrapper](entries/build-native-wrapper.md) — omit it and Linux packaging fails with `ln: No such file`
 - [glibc tar bundles musl → two-stage build](entries/glibc-tar-bundles-musl.md) — CMake libdatadog FetchContent libc-contamination gotcha
 - [Where the Linux package is produced](entries/linux-package-targets.md) — PackageTracerHome / ZipMonitoringHomeLinux, output paths
