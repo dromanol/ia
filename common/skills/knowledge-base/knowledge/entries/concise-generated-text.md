@@ -27,6 +27,8 @@ LLM-generated filler, which costs the change credibility.
 - **Skills/instructions:** every line costs context on load and dilutes the rest. Keep the commands,
   flags, paths, and gotchas; cut restated rationale, motivational framing, and anything the model
   already knows how to do. A step is a command plus its non-obvious caveat — not a paragraph.
+- No greetings, no intros ("Sure, I'll..."), no closing wrap-up. When the user asks for code or a
+  specific piece of text, return just that — no surrounding commentary — unless a caveat is load-bearing.
 
 Being concise is not the same as omitting scope: still state what was left out and why. Trim words,
 not facts.

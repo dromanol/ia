@@ -1,6 +1,6 @@
 ---
 name: signed-commit-troubleshooting
-description: 1Password signing failures are transient (locked agent) — retry, never --no-gpg-sign; and "No signature" from git log is misleading without allowedSignersFile.
+description: Transient git failures worth a plain retry — 1Password signing errors and push "access rights" errors — plus why "No signature" from git log is misleading without allowedSignersFile.
 type: gotcha
 ---
 
@@ -37,3 +37,19 @@ git cat-file commit HEAD | grep -c gpgsig
 
 A `gpgsig -----BEGIN SSH SIGNATURE-----` header means it is signed and will verify on the forge, which
 has the public keys. Don't report a commit as unsigned based on `--show-signature` alone.
+
+## `git push` failing with "Please make sure you have the correct access rights"
+
+```
+fatal: Could not read from remote repository.
+Please make sure you have the correct access rights and the repository exists.
+```
+
+On a remote you were pushing to successfully minutes earlier this is usually **transient** (agent /
+network hiccup), not a permissions change. Check what actually happened before diagnosing:
+
+```bash
+git status -sb        # "## branch...origin/branch [ahead 1]" => nothing was pushed
+```
+
+Then simply retry the push. Only start investigating credentials if a second attempt fails the same way.

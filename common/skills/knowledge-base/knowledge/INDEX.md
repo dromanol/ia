@@ -13,3 +13,5 @@ entries. Repo-specific knowledge belongs in that repo's own `/project-knowledge`
 - [Benchmark regression triage](entries/benchmark-regression-triage.md) — cross-PR history + %→ns/op arithmetic tell a real CI regression from a miscalibrated baseline
 - [Bash tool is not PowerShell](entries/bash-tool-vs-powershell-syntax.md) — PowerShell here-strings `@'…'@` corrupt the argument silently in Bash; use a heredoc and verify
 - [Signed commit troubleshooting](entries/signed-commit-troubleshooting.md) — 1Password failures are transient: retry, never bypass signing; "No signature" is a verification gap
+- [Editing repo files from scripts on Windows](entries/windows-script-file-edits.md) — Bash `/tmp` != Windows-Python `/tmp`; preserve the original BOM and CRLFs
+- [PR review threads via `gh api`](entries/github-pr-review-via-cli.md) — three endpoints, anchor on `diff_hunk`, reply with `in_reply_to`, never rename the head branch
