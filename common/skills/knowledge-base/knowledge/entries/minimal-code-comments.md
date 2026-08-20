@@ -8,10 +8,10 @@ Write no comment unless its absence would cost a reader real time. The bar is a 
 express: a non-obvious constraint, a race, a platform/TFM quirk, a deliberate omission, a reason a
 tempting simpler form is wrong. Everything else is deleted, not shortened.
 
-Delete on sight: restatements of the next line, section banners (`// --- setup ---`), XML doc on private
-or test-only members, comments naming what a well-named symbol already says, TODOs without an owner,
-narration of a diff ("now uses CAS instead of..."), and any comment that repeats the commit message or
-PR body.
+Delete on sight: restatements of the next line, section banners (`// --- setup ---`), XML doc on private,
+internal or test-only members, multi-line `<summary>` blocks arguing why a helper exists (that belongs in
+the PR body), comments naming what a well-named symbol already says, TODOs without an owner, narration of
+a diff ("now uses CAS instead of..."), and any comment that repeats the commit message or PR body.
 
 **Why:** comments are the first thing to rot and the loudest tell of generated code. A wrong comment is
 worse than none, and a wall of them buries the one line that actually mattered.
