@@ -1,6 +1,6 @@
 ---
 name: pr-description-template
-description: dd-trace-dotnet PR descriptions must follow .github/pull_request_template.md's schema and be kept short/concise.
+description: dd-trace-dotnet PRs must follow .github/pull_request_template.md's schema, stay short, and carry the right area:* label.
 type: reference
 ---
 
@@ -27,3 +27,16 @@ a multi-round bugfix) has a lot of history behind it — summarize, don't narrat
 `gh` CLI may not be available in all environments — see `ddtool auth github token` +
 `PATCH https://api.github.com/repos/DataDog/dd-trace-dotnet/pulls/<n>` as a fallback for editing a PR
 description via the REST API directly.
+
+## Labels
+
+A PR carries no label until someone adds one — set it when opening the PR. Find the exact names with
+`gh label list --repo DataDog/dd-trace-dotnet --limit 200`, and copy what a comparable recent PR uses
+(`gh pr view <n> --json labels`) instead of guessing.
+
+AppSec/AAP work: **`area:asm`**. Don't also add `area:asm-iast` (IAST only) or `area:asm-waf-update`
+(libddwaf/ruleset version bumps only).
+
+```bash
+gh pr edit <n> --add-label area:asm
+```
