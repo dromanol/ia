@@ -24,6 +24,18 @@ The failing step is loud, but the step *after* it isn't — it happily uses the 
 **repo-relative** temp file (`pr9057.tmp.md`) instead, and verify the edit landed
 (`grep -c "<new text>" pr9057.tmp.md`) before consuming it.
 
+The same split hits **every** MSYS path form, not just `/tmp`. Paths that Bash tools print and accept —
+`/c/Users/you/...`, `/c/_dd/git/...` — are meaningless to a Windows-native interpreter:
+
+```bash
+find /c/Users/me/.claude -name known_marketplaces.json   # works, prints /c/Users/...
+python -c "open('/c/Users/me/.claude/known_marketplaces.json')"  # FileNotFoundError
+```
+
+When you hand a path from `find`/`ls` to `python.exe`, convert it to the drive form first
+(`C:\Users\me\...`), or pass it as a raw string literal in the script file. `cygpath -w` does the
+conversion if you need it programmatically.
+
 ## A Python rewrite drops the BOM and the line endings
 
 `open(p).read()` + `open(p,"w").write(s)` normalises away whatever the file had. In a repo with
